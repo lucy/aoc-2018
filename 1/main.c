@@ -2,27 +2,31 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-struct b { int64_t v; struct b *l; struct b *r; };
-int tinsert(struct b **b, int64_t v) {
+
+struct bt { int64_t v; struct bt *l; struct bt *r; };
+
+int bt_insert(struct bt **b, int64_t v) {
 	while (1) {
 		if (!*b) {
 			*b = malloc(sizeof(**b));
-			**b = (struct b) { v, 0, 0 };
+			**b = (struct bt) { .v = v, .l = 0, .r = 0 };
 			return 0;
 		}
 		if ((*b)->v == v) return 1;
-		if ((*b)->v < v) b = &(*b)->l;
-		else b = &(*b)->r;
+		if ((*b)->v > v) b = &(*b)->r;
+		else if ((*b)->v < v) b = &(*b)->l;
 	}
-}
-int tsearch(struct b *b, int64_t v) {
+} 
+
+int bt_search(struct bt *b, int64_t v) {
 	while (1) {
 		if (!b) return 0;
 		if (b->v == v) return 1;
-		if (b->v < v) b = b->l;
-		else b = b->r;
+		if (b->v > v) b = b->r;
+		else if (b->v < v) b = b->r;
 	}
 }
+
 int main(void) {
 	size_t cap = 32, len = 0;
 	int64_t *l = malloc(cap*sizeof(*l));
@@ -35,11 +39,11 @@ int main(void) {
 	for (size_t i = 0; i < len; i++) freq += l[i];
 	printf("%ld\n", freq);
 	freq = 0;
-	struct b *b = 0;
+	struct bt *b = 0;
 	while (1) {
 		for (size_t i = 0; i < len; i++) {
 			freq += l[i];
-			if (tinsert(&b, freq)) goto L;
+			if (bt_insert(&b, freq)) goto L;
 		}
 	}
 L:
