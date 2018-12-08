@@ -14,10 +14,10 @@ int tree(struct t *n, int *input, int ii, int len) {
 }
 
 int p1(struct t *n) {
-	int m = 0;
-	for (int i = 0; i < n->clen; i++) m += p1(&n->c[i]);
-	for (int i = 0; i < n->mlen; i++) m += n->m[i];
-	return m;
+	int v = 0;
+	for (int i = 0; i < n->clen; i++) v += p1(&n->c[i]);
+	for (int i = 0; i < n->mlen; i++) v += n->m[i];
+	return v;
 }
 
 int p2(struct t *n) {
@@ -30,9 +30,10 @@ int p2(struct t *n) {
 }
 
 int main(void) {
-	int l[1<<15], len = 0;
+	int l[1<<15] /* there are less than 32k values */, len = 0;
 	while (scanf("%d", &l[len]) == 1) len++;
 	struct t n = {0};
-	tree(&n, l, 0, len);
+	tree(&n, l, 0, len); /* constructing the tree makes p1 and 2 much
+	                        simpler */
 	printf("%d\n%d\n", p1(&n), p2(&n));
 }

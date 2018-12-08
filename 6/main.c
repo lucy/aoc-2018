@@ -33,7 +33,7 @@ int main(void) {
 			if (l[m].n != -1) l[m].n++;
 		}
 
-	int max = 0, mi;
+	int max = 0, mi = 0;
 	for (size_t i = 1; i < len; i++)
 		if (l[i].n > max) { max = l[i].n; mi = i; }
 	printf("%d %d,%d\n", max, l[mi].x, l[mi].y);
