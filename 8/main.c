@@ -9,14 +9,11 @@ int p1(int *r, int *l, int ii) {
 }
 
 int p2(int *r, int *l, int ii) {
-	int c = l[ii++], m = l[ii++];
-	if (c == 0) {
-		for (int i = 0; i < m; i++) *r += l[ii++];
-		return ii;
-	}
-	int *cc = calloc(c, sizeof(int)), j;
+	int c = l[ii++], m = l[ii++], *cc = c ? calloc(c, sizeof(int)) : 0;
 	for (int i = 0; i < c; i++) ii = p2(&cc[i], l, ii);
-	for (int i = 0; i < m; i++) if ((j = l[ii++]) && j <= c) *r += cc[j-1];
+	for (int i = 0, j; i < m; i++)
+		if ((j = l[ii++]), !c) *r += j;
+		else if (j && j <= c) *r += cc[j-1];
 	free(cc);
 	return ii;
 }
