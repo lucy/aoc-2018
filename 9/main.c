@@ -3,48 +3,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct p { int64_t v; int prev, next; };
+struct p { uint32_t next, prev; };
 
-int insert(struct p *a, int y, int x, int64_t v) {
-	int z = a[x].next;
-	a[x].next = a[z].prev = y;
-	a[y] = (struct p) { v, x, z };
+uint32_t insert(struct p *a, uint32_t y, uint32_t x) {
+	uint32_t z = a[x].next;
+	a[z].prev = a[x].next = y;
+	a[y].prev = x;
+	a[y].next = z;
 	return y;
 }
 
-int delete(struct p *a, int y) {
-	int z = a[y].next;
-	a[a[y].prev].next = z;
-	a[z].prev = a[y].prev;
+uint32_t delete(struct p *a, uint32_t y) {
+	uint32_t x = a[y].prev, z = a[y].next;
+	a[z].prev = x;
+	a[x].next = z;
 	return z;
 }
 
-void run(int p, int64_t h) {
-	int64_t *scores = calloc(p, sizeof(*scores));
+uint64_t run(uint32_t p, uint32_t h) {
+	uint64_t *scores = calloc(p, sizeof(*scores));
 	struct p *a = malloc((h+1) * sizeof(*a));
-	int l = 0;
-	a[l] = (struct p) { 0, l, l };
-	for (int n = 1; n <= h; n++) {
-		if (n%23 != 0) {
-			l = insert(a, n, a[l].next, n);
-		} else {
-			for (int i = 0; i < 7; i++) l = a[l].prev;
-			scores[n%p] += n + a[l].v;
+	uint32_t l = 0;
+	a[l].prev = a[l].next = l;
+	for (uint32_t n = 1; n <= h; n++) {
+		if (n%23 == 0) {
+			for (uint32_t i = 0; i < 7; i++) l = a[l].prev;
+			scores[n%p] += n + l;
 			l = delete(a, l);
+		} else {
+			l = insert(a, n, a[l].next);
 		}
 	}
-	int64_t max = 0;
-	for (int i = 0; i < p; i++)
+	uint64_t max = 0;
+	for (uint32_t i = 0; i < p; i++)
 		if (scores[i] > max)
 			max = scores[i];
-	printf("%" PRId64 "\n", max);
 	free(a);
 	free(scores);
+	return max;
 }
 
+#define format "%" SCNu32 " players; last marble is worth %" SCNu32 " points"
+
 int main(void) {
-	int p, h;
-	scanf("%d players; last marble is worth %d points", &p, &h);
-	run(p, h);
-	run(p, (int64_t)h*100);
+	uint32_t p, h;
+	scanf(format, &p, &h);
+	printf("%" PRIu64 "\n", run(p, h));
+	printf("%" PRIu64 "\n", run(p, h*100));
 }
