@@ -5,8 +5,7 @@
 
 struct p { int64_t v; struct p *prev, *next; };
 
-static struct p *insert(struct p *x, int64_t v) {
-	struct p *y = malloc(sizeof(*y));
+static struct p *insert(struct p *y, struct p *x, int64_t v) {
 	struct p *z = x->next;
 	x->next = z->prev = y;
 	*y = (struct p) { v, x, z };
@@ -17,17 +16,18 @@ static struct p *delete(struct p *y) {
 	struct p *z = y->next;
 	y->prev->next = z;
 	z->prev = y->prev;
-	//free(y);
 	return z;
 }
 
 static void run(int p, int64_t h) {
 	int64_t *scores = calloc(p, sizeof(*scores));
-	struct p *l = calloc(1, sizeof(*l));
-	l->prev = l->next = l;
-	for (int64_t n = 1; n <= h; n++) {
+	struct p *a = malloc((h+1) * sizeof(*a));
+	int n = 0;
+	struct p *l = &a[n++];
+	*l = (struct p) { 0, l, l };
+	for (; n <= h; n++) {
 		if (n%23 != 0) {
-			l = insert(l->next, n);
+			l = insert(&a[n], l->next, n);
 		} else {
 			for (int i = 0; i < 7; i++) l = l->prev;
 			scores[n%p] += n + l->v;
@@ -39,6 +39,8 @@ static void run(int p, int64_t h) {
 		if (scores[i] > max)
 			max = scores[i];
 	printf("%" PRId64 "\n", max);
+	free(a);
+	free(scores);
 }
 
 int main(void) {
