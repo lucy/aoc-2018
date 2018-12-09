@@ -1,37 +1,36 @@
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <inttypes.h>
 
-struct p { int64_t v; struct p *prev, *next; };
+struct p { int64_t v; int prev, next; };
 
-static struct p *insert(struct p *y, struct p *x, int64_t v) {
-	struct p *z = x->next;
-	x->next = z->prev = y;
-	*y = (struct p) { v, x, z };
+int insert(struct p *a, int y, int x, int64_t v) {
+	int z = a[x].next;
+	a[x].next = a[z].prev = y;
+	a[y] = (struct p) { v, x, z };
 	return y;
 }
 
-static struct p *delete(struct p *y) {
-	struct p *z = y->next;
-	y->prev->next = z;
-	z->prev = y->prev;
+int delete(struct p *a, int y) {
+	int z = a[y].next;
+	a[a[y].prev].next = z;
+	a[z].prev = a[y].prev;
 	return z;
 }
 
-static void run(int p, int64_t h) {
+void run(int p, int64_t h) {
 	int64_t *scores = calloc(p, sizeof(*scores));
 	struct p *a = malloc((h+1) * sizeof(*a));
-	int n = 0;
-	struct p *l = &a[n++];
-	*l = (struct p) { 0, l, l };
-	for (; n <= h; n++) {
+	int l = 0;
+	a[l] = (struct p) { 0, l, l };
+	for (int n = 1; n <= h; n++) {
 		if (n%23 != 0) {
-			l = insert(&a[n], l->next, n);
+			l = insert(a, n, a[l].next, n);
 		} else {
-			for (int i = 0; i < 7; i++) l = l->prev;
-			scores[n%p] += n + l->v;
-			l = delete(l);
+			for (int i = 0; i < 7; i++) l = a[l].prev;
+			scores[n%p] += n + a[l].v;
+			l = delete(a, l);
 		}
 	}
 	int64_t max = 0;
