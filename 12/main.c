@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
-#define size 2048
+#define size 512
 
 int main(void) {
 	char *raw_state = malloc(128);
@@ -12,24 +11,30 @@ int main(void) {
 	while (scanf("%5s => %c\n", f, &t) == 2) {
 		unsigned char x = 0;
 		for (int i = 0; i < 5; i++)
-			x |= (f[i] == '#') << i;
+			x = x << 1 | (f[i] == '#');
 		subs[x] = t == '#';
 	}
-	char *c = calloc(size, 1), *l = calloc(size, 1);
+	char *c = malloc(size), *l = calloc(size, 1);
 	for (size_t i = 0; i < strlen(raw_state); i++)
-		l[i+size/2] = raw_state[i] == '#';
+		l[i] = raw_state[i] == '#';
 	long long lsum = 0;
+	long long off = 0;
 	for (size_t g = 1; ; g++) {
-		for (size_t i = 2; i < size-2; i++)
-			c[i] = subs[l[i-2]|l[i-1]<<1|l[i]<<2|l[i+1]<<3|l[i+2]<<4];
+		size_t j = 0;
+		while(!l[j]) j++;
+		unsigned char s = 0;
+		for (size_t i = j; i < size; i++) {
+			s = (s << 1 | l[i]) & 31;
+			c[i-j] = subs[s];
+		}
+		off -= 2 - j;
 		char *tmp = l;
 		l = c, c = tmp;
-		memset(c, 0, size);
 		long long sum = 0;
 		for (size_t i = 0; i < size; i++)
-			if (l[i])sum += i-size/2;
+			if (l[i]) sum += i+off;
 		if (g == 20) printf("%lld\n", sum);
-		if (g == 500) {
+		if (memcmp(l, c, size) == 0) {
 			printf("%lld\n", (50000000000-g)*(sum-lsum)+sum);
 			break;
 		}
