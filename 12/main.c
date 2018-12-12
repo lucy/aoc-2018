@@ -3,47 +3,34 @@
 #include <string.h>
 #include <stdint.h>
 
+#define size 2048
+
 int main(void) {
-	char *s = malloc(1024);
-	scanf("initial state: %1023s\n\n", s);
-	printf("%s\n", s);
-	int cap = 32, len = 0;
-	char **subs = malloc(cap * sizeof(*subs));
-	char f[6], t;
+	char *raw_state = malloc(128);
+	scanf("initial state: %127s\n\n", raw_state);
+	char subs[0xff] = {0}, f[6], t;
 	while (scanf("%5s => %c\n", f, &t) == 2) {
-		if (len >= cap) subs = realloc(subs, (cap *= 2) * sizeof(*subs));
-		subs[len] = malloc(6);
-		memcpy(subs[len], f, 5);
-		subs[len++][5] = t;
+		unsigned char x = 0;
+		for (int i = 0; i < 5; i++)
+			x |= (f[i] == '#') << i;
+		subs[x] = t == '#';
 	}
-	char cgen[4096*8];
-	char lgen[4096*8];
-	memset(lgen, '.', sizeof(lgen));
-	memset(cgen, '.', sizeof(cgen));
-	memcpy(lgen+2048*8, s, strlen(s));
-	long lsum = 0;
-	for (size_t z = 1; ; z++) {
-		for (size_t i = 2; i < sizeof(cgen)-2; i++) {
-			for (size_t j = 0; j < (size_t)len; j++) {
-				char *m = subs[j];
-				if (lgen[i-2] == m[0] && lgen[i-1] == m[1] && lgen[i] == m[2] &&
-					lgen[i+1] == m[3] && lgen[i+2] == m[4]) {
-					cgen[i] = m[5];
-					break;
-				}
-			}
-		}
-		memcpy(lgen, cgen, sizeof(cgen));
-		memset(cgen, '.', sizeof(cgen));
-		long sum = 0;
-		for (size_t i = 0; i < sizeof(cgen); i++) {
-			if (lgen[i] == '#') {
-				sum += i-2048*8;
-			}
-		}
-		if (z == 20) printf("%ld\n", sum);
-		if (z == 1000) {
-			printf("%ld\n", (50000000000-z)*(sum-lsum)+sum);
+	char *c = calloc(size, 1), *l = calloc(size, 1);
+	for (size_t i = 0; i < strlen(raw_state); i++)
+		l[i+size/2] = raw_state[i] == '#';
+	long long lsum = 0;
+	for (size_t g = 1; ; g++) {
+		for (size_t i = 2; i < size-2; i++)
+			c[i] = subs[l[i-2]|l[i-1]<<1|l[i]<<2|l[i+1]<<3|l[i+2]<<4];
+		char *tmp = l;
+		l = c, c = tmp;
+		memset(c, 0, size);
+		long long sum = 0;
+		for (size_t i = 0; i < size; i++)
+			if (l[i])sum += i-size/2;
+		if (g == 20) printf("%lld\n", sum);
+		if (g == 500) {
+			printf("%lld\n", (50000000000-g)*(sum-lsum)+sum);
 			break;
 		}
 		lsum = sum;
