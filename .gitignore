@@ -2,3 +2,5 @@ main
 *.o
 *.hi
 a*
+*.dyn_o
+*.dyn_hi
