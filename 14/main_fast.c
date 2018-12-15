@@ -21,9 +21,10 @@ int main(void) {
 			a[len++] = 1;
 			r = ((r << 4) | 1) & mask;
 			if (r == d) break;
+			sum %= 10;
 		}
-		a[len++] = sum%10;
-		r = ((r << 4) | (sum%10)) & mask;
+		a[len++] = sum;
+		r = ((r << 4) | sum) & mask;
 		if (r == d) break;
 		i1 = (i1+a[i1]+1)%len;
 		i2 = (i2+a[i2]+1)%len;
