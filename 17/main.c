@@ -15,21 +15,30 @@ int main(void) {
 		if (x2 > xmax) xmax = x2;
 	}
 	int s[5000], i = 0;
+	/* push '|' at 0,500 */
 	scan[0][500] = '|'; s[i++] = 500, s[i++] = 0;
 	while (i) {
 		int y = s[--i], x = s[--i], x1 = x, x2 = x;
+		/* if down is 0 set it to '|' and push */
 		if (scan[y+1][x] == 0) scan[y+1][x] = '|', s[i++] = x, s[i++] = y+1;
+		/* if unsupported, skip (doesn't have '#'/'~' below) */
 		if (c = scan[y+1][x], c != '#' && c != '~') continue;
+		/* fill '|'s left until '#' */
 		for (; scan[y][x1-1] != '#'; scan[y][--x1] = '|')
 			if (c = scan[y+1][x1], c != '#' && c != '~') {
+				/* push and break if unsupported */
 				s[i++] = x1, s[i++] = y; break;
 			}
+		/* fill '|'s right until '#' */
 		for (; scan[y][x2+1] != '#'; scan[y][++x2] = '|')
 			if (c = scan[y+1][x2], c != '#' && c != '~') {
+				/* push and break if unsupported */
 				s[i++] = x2, s[i++] = y; break;
 			}
 		if (scan[y][x1-1] != '#' || scan[y][x2+1] != '#') continue;
+		/* if '|' row is touching '#'s on both sides, turn into '~' */
 		for (; x1 <= x2; scan[y][x1++] = '~')
+			/* push all '|'s above */
 			if (scan[y-1][x1] == '|') s[i++] = x1, s[i++] = y-1;
 	}
 	int still = 0, flow = 0;
