@@ -4,49 +4,47 @@
 #include <unistd.h>
 #include <string.h>
 
-#define STATE_L1 1
-#define STATE_S2 2
-#define STATE_R3 3
+#define STATE_L1 0
+#define STATE_S2 1
+#define STATE_R3 2
+
+struct cart { char c; char xv, yv; char state, done; };
 
 int main(void) {
-	int len = 0, cap = 32;
-	char **g = malloc(cap*(sizeof(*g)));
-	ssize_t n;
-	size_t llen = 0;
-	char *l = 0;
-	while ((n = getline(&l, &llen, stdin)) != -1) {
-		if (len >= cap) g = realloc(g, (cap *= 2) * sizeof(*g));
-		if (l[n-1] == '\n') l[--n] = 0;
-		g[len++] = strdup(l);
-		l = 0;
-		llen = 0;
+	size_t buflen = 0;
+	int len = 0, cap = 1024, w = 0, h = 0;
+	char *buf = 0, *map = malloc(cap*(sizeof(*map)));
+	while (1) {
+		ssize_t n = getline(&buf, &buflen, stdin);
+		if (n == -1) break;
+		while (len+n >= cap) map = realloc(map, (cap *= 2) * sizeof(*map));
+		memcpy(map+len, buf, n);
+		len += n, w = n;
+		if (map[len-1] == '\n') map[--len] = 0, w--;
+		h++;
 	}
-	for (int i = 0; i < len; i++) {
-		printf("f %s\n", g[i]);
+	free(buf);
+
+	struct cart *carts = calloc(w*h, sizeof(*carts));
+	for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+		char c = map[y*w+x];
+		struct cart *cart = &carts[y*w+x];
+		//if (c == '<') cart->xv = -1;
+		//if (c == '>') cart->xv = +1;
+		//if (c == '^') cart->yv = -1;
+		//if (c == 'v') cart->yv = +1;
+		if (c == '<' || c == '>' || c == '^' || c == 'v')
+			cart->c = c;
 	}
-	int w = strlen(g[0]);
-	int h = len;
-	char **carts = calloc(sizeof(*carts)*h, 1);
-	char **done = calloc(sizeof(*carts)*h, 1);
-	char **state = calloc(sizeof(*state)*h, 1);
-	for (int y = 0; y < h; y++) {
-		carts[y] = calloc(sizeof(**carts)*w, 1);
-		done[y] = calloc(sizeof(**carts)*w, 1);
-		state[y] = calloc(sizeof(**state)*w, 1);
-		for (int x = 0; x < w; x++) {
-			if (g[y][x] == '>' || g[y][x] == '<' || g[y][x] == 'v' || g[y][x] == '^') {
-				carts[y][x] = g[y][x];
-				state[y][x] = STATE_L1;
-			}
-		}
-	}
+
 	int f = 0;
 	for (int i = 0; ; i++) {
 		for (int y = 0; y < h; y++) {
 			for (int x = 0; x < w; x++) {
-				char t = g[y][x];
-				char c = carts[y][x];
-				char s = state[y][x];
+				char t = map[y*w+x];
+				struct cart *cart = &carts[y*w+x];
+				char c = cart->c;
+				char s = cart->state;
 				int x1 = x, y1 = y;
 
 				if (t == ' ') {
@@ -54,7 +52,8 @@ int main(void) {
 					continue;
 				}
 
-				if (c == 0 || done[y][x]) {
+				
+				if (c == 0 || cart->done) {
 					//printf("%c", t);
 					continue;
 				}
@@ -95,26 +94,29 @@ int main(void) {
 				if (c == '<') x1--;
 				if (c == 'v') y1++;
 				if (c == '>') x1++;
-				if (carts[y1][x1] && !f) {
+
+				struct cart *cart2 = &carts[y1*w+x1];
+				if (cart2->c && !f) {
 					printf("%d,%d\n", x1, y1);
 					f = 1;
 				}
-				if (carts[y1][x1]) {
-					carts[y1][x1] = 0;
-					state[y1][x1] = 0;
+				if (cart2->c) {
+					printf("boom %d,%d @ %d\n", x1, y1, i);
+					cart2->c = 0;
+					cart2->state = 0;
 				} else {
-					carts[y1][x1] = c;
-					state[y1][x1] = s;
+					cart2->c = c;
+					cart2->state = s;
 				}
-				carts[y][x] = 0;
-				state[y][x] = 0;
-				done[y1][x1] = 1;
+				cart->c = 0;
+				cart->state = 0;
+				cart2->done = 1;
 			}
 		}
 		int n = 0, x1, y1;
 		for (int y = 0; y < h; y++)
 			for (int x = 0; x < w; x++)
-				if (carts[y][x])
+				if (carts[y*w+x].c)
 					n++, x1 = x, y1 = y;
 		if (n == 1) {
 			printf("%d,%d\n", x1, y1);
@@ -122,7 +124,7 @@ int main(void) {
 		}
 		for (int y = 0; y < h; y++) {
 			for (int x = 0; x < w; x++) {
-				done[y][x] = 0;
+				carts[y*w+x].done = 0;
 			}
 		}
 	}

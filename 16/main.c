@@ -1,8 +1,7 @@
 #include <stdio.h>
+#include <stdint.h>
 
-struct ins { int op; int a, b, c; };
-
-int run(int op, int a, int b, int r[4]) {
+static inline int run(int op, int a, int b, int r[4]) {
 	switch (op) {
 	case 0x0: return r[a] + r[b];
 	case 0x1: return r[a] + b;
@@ -27,7 +26,8 @@ int run(int op, int a, int b, int r[4]) {
 #define op_max (0xf + 1)
 
 int main(void) {
-	int opset[op_max][op_max] = {0}, p1 = 0;
+	uint16_t opset[op_max] = {0};
+	int p1 = 0;
 	for (;;) {
 		int op, a, b, c;
 		int ri[4], ro[4], p = 0;
@@ -41,20 +41,18 @@ int main(void) {
 		if (n != 12) break;
 		for (int x = 0; x < op_max; x++)
 			if (run(x, a, b, ri) == ro[c]) p++;
-			else opset[op][x] = 1;
+			else opset[op] |= 1<<x;
 		if (p >= 3) p1++;
 	}
 	int ops[op_max] = {0};
-	for (int n = 0; n < op_max;) {
+	uint16_t found = 0;
+	while (found != 0xffff) {
 		for (int x = 0; x < op_max; x++) {
-			int g = 0, opx = 0;
-			for (int op = 0; op < op_max; op++)
-				if (!opset[x][op]) g++, opx = op;
-			if (g != 1) continue;
-			for (int y = 0; y < op_max; y++)
-				opset[y][opx] = 1;
+			uint16_t a = ~(opset[x] | found);
+			if (__builtin_popcount(a) != 1) continue;
+			int opx = __builtin_ffs(a) - 1;
+			found |= a;
 			ops[x] = opx;
-			n++;
 		}
 	}
 	int reg[4] = {0};

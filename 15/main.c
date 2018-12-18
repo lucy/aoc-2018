@@ -97,6 +97,21 @@ struct find_result find(char enemy, int xo, int yo, int h, int w, char **map) {
 	return (struct find_result) { xmin, ymin, 1 };
 }
 
+int debug_print(char **map, int **hp, int w, int h) {
+	for (int y = 0; y < h; y++) {
+		printf("%s", map[y]);
+	}
+	/*
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+			if (hp[y][x] != INT_MAX) {
+				printf("%c (%d)\n", map[y][x], hp[y][x]);
+			}
+		}
+	}
+	*/
+}
+
 int run(char **inmap, int h, int w, int p2) {
 	int hw = h;
 	int **hp = calloc(100,sizeof(*hp));
@@ -119,6 +134,8 @@ int run(char **inmap, int h, int w, int p2) {
 
 	int gen = 0;
 	while (1) {
+		//printf("after %d rounds(s):\n", gen);
+		//debug_print(map, hp, h, w);
 		int done[100][100] = {0};
 		for (int y = 0; y < h; y++) {
 			for (int x = 0; x < w; x++) {
@@ -189,9 +206,10 @@ L:;
 	}
 	free(map);
 	free(hp);
-	printf("%d\n", gen*total_hp);
+	printf("%d full rounds, %d total hp, result: %d\n", gen, total_hp, gen*total_hp);
 	return 1;
 }
+
 
 int main(void) {
 	char **map = calloc(100,sizeof(*map));
@@ -206,5 +224,7 @@ int main(void) {
 		w = n-1;
 	}
 	run(map, h, w, 0);
-	for (int i = 4; !run(map, h, w, i); i++);
+	int i = 4;
+	for (; !run(map, h, w, i); i++);
+	printf("%d\n", i);
 }
