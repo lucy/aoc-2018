@@ -10,8 +10,8 @@ int main(void) {
 	size_t buflen = 0;
 	char *s = 0;
 	ssize_t len = getline(&s, &buflen, stdin);
-	if (len == -1) return 1;
-	int st[5000], si = 0;
+	int st[1000], si = 0;
+	/* find dimensions */
 	int xmin = 0, xmax = 0, ymin = 0, ymax = 0;
 	for (int x = 0, y = 0, i = 0; i < len; i++) {
 		char c = s[i];
@@ -24,8 +24,12 @@ int main(void) {
 		if (x > xmax) xmax = x; else if (x < xmin) xmin = x;
 		if (y > ymax) ymax = y; else if (y < ymin) ymin = y;
 	}
+	/* make a door map. doors[y*w+x] has the first bit set if point x,y
+	 * has a door to the north and the second bit set if it has a door to
+	 * the west.  south and east doors are found by accessing x+1,y and
+	 * x,y+1. */
 	int w = xmax - xmin + 1, h = ymax - ymin + 1;
-	unsigned char *doors = calloc((w+1)*(h+1), 1);
+	char *doors = calloc((w+1)*(h+1), 1);
 	for (int x = -xmin, y = -ymin, i = 0; i < len; i++) {
 		char c = s[i];
 		if (c == '^' || c == '$' || c == '\n') continue;
@@ -34,10 +38,11 @@ int main(void) {
 		if (c == ')') { si -= 2; continue; }
 		int yv = (c == 'S') - (c == 'N');
 		int xv = (c == 'E') - (c == 'W');
-		doors[(y+(yv>0))*w+(x+(xv>0))] |= (yv ? N : W);
+		doors[(y+(yv>0))*w+x+(xv>0)] |= (yv ? N : W);
 		x += xv, y += yv;
 	}
-	int *distances = calloc(w*h, sizeof(*distances));
+	/* find all minimum distances to 0,0 */
+	int *distances = malloc(w*h*sizeof(*distances));
 	for (int i = 0; i < w*h; i++) distances[i] = INT_MAX;
 	distances[-ymin*h-xmin] = 0;
 	int xvs[4] = {0, -1, 1, 0}, yvs[4] = {-1, 0, 0, 1};
@@ -47,13 +52,13 @@ int main(void) {
 		for (int i = 0; i < 4; i++) {
 			int x1 = x+xvs[i], y1 = y+yvs[i];
 			int yo = yvs[i] > 0, xo = xvs[i] > 0;
-			int m = yvs[i] ? N : W;
-			if (!(doors[(y+yo)*w+(x+xo)] & m)) continue;
+			if (!(doors[(y+yo)*w+x+xo] & (yvs[i] ? N : W))) continue;
 			if (d + 1 < distances[y1*h+x1])
 				distances[y1*h+x1] = d + 1,
 				st[si++] = x1, st[si++] = y1;
 		}
 	}
+	/* find max distance and count distances over 999 */
 	int m = 0, c = 0;
 	for (int i = 0; i < w*h; i++) {
 		int d = distances[i];
